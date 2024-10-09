@@ -446,7 +446,7 @@ def Reliability_model(transformation, formulation, datafolder):
 
 
     if formulation == 'n-1':
-        m.scenario = pyo.RangeSet(1,36)  # 1-36, a total of 36 scenarios
+        m.scenario = pyo.RangeSet(0,36)  # 1-36, a total of 36 scenarios
 
         # Read CSV files after defining file paths
         sc_ind_gen = pd.read_csv(os.path.join(curPath, 'sc_ind_gen_n1.csv'), header=0)
@@ -463,7 +463,7 @@ def Reliability_model(transformation, formulation, datafolder):
         
         m.scenario_indicator_gen = pyo.Param(m.node, m.generator, m.year, m.rpdn, m.scenario, within=pyo.NonNegativeReals, initialize=scenario_indicator_gen)
         m.scenario_indicator_line = pyo.Param(m.line, m.year, m.rpdn, m.scenario, within=pyo.NonNegativeReals, initialize=1)
-        m.scenario_rate = pyo.Param(m.scenario, within=pyo.NonNegativeReals, initialize=0.02778)
+        m.scenario_rate = pyo.Param(m.scenario, within=pyo.NonNegativeReals, initialize=0.027)
 
         m.cap_sv = pyo.Var(m.node, m.generator, m.year, m.rpdn, m.scenario, within=pyo.NonNegativeReals, doc='Generation capacity survived in scenario')
         m.cap_sv_line = pyo.Var(m.line, m.year, m.rpdn, m.scenario, within=pyo.NonNegativeReals, doc='Line capacity survived in scenario')
@@ -598,7 +598,7 @@ def Reliability_model(transformation, formulation, datafolder):
 
 
     if formulation == 'n-2':
-        m.scenario = pyo.RangeSet(1,36)  # 1-36, a total of 36 scenarios
+        m.scenario = pyo.RangeSet(0,36)  # 1-36, a total of 36 scenarios
         
         # Read CSV files after defining file paths
         sc_ind_gen = pd.read_csv(os.path.join(curPath, 'sc_ind_gen_n2.csv'), header=0)
@@ -615,7 +615,7 @@ def Reliability_model(transformation, formulation, datafolder):
         
         m.scenario_indicator_gen = pyo.Param(m.node, m.generator, m.year, m.rpdn, m.scenario, within=pyo.NonNegativeReals, initialize=scenario_indicator_gen)
         m.scenario_indicator_line = pyo.Param(m.line, m.year, m.rpdn, m.scenario, within=pyo.NonNegativeReals, initialize=1)
-        m.scenario_rate = pyo.Param(m.scenario, within=pyo.NonNegativeReals, initialize=0.02778)
+        m.scenario_rate = pyo.Param(m.scenario, within=pyo.NonNegativeReals, initialize=0.027)
 
         m.cap_sv = pyo.Var(m.node, m.generator, m.year, m.rpdn, m.scenario, within=pyo.NonNegativeReals, doc='Generation capacity survived in scenario')
         m.cap_sv_line = pyo.Var(m.line, m.year, m.rpdn, m.scenario, within=pyo.NonNegativeReals, doc='Line capacity survived in scenario')
@@ -1479,7 +1479,7 @@ def Reliability_model(transformation, formulation, datafolder):
     return m
 
 if __name__ == "__main__":
-    m = Reliability_model(transformation='bigm', formulation='no', datafolder='Illustrative')
+    m = Reliability_model(transformation='bigm', formulation='n-2', datafolder='Illustrative')
 
     opt = pyo.SolverFactory('gurobi')
     opt.options['Threads'] = 8
@@ -1523,9 +1523,9 @@ if __name__ == "__main__":
     #       "| EENS penalty", round(value(m.EENS_penalties()), 2)
     #       )
 
-    for t in m.year:
-        print("Demand every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.load_demand[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub), 3)  
-        )
+    # for t in m.year:
+    #     print("Demand every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.load_demand[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub), 3)  
+    #     )
     
     print("CAPEX", round(value(m.capital_expenditure()), 2), "| IC_Gen", round(value(m.IC_generator()), 2), "| IC_Line", round(value(m.IC_line()), 2), 
           "| OPEX", round(value(m.operating_expenses()), 2), "| FC_Gen", round(value(m.FOC_generator()), 2), "| FC_Line", round(value(m.FOC_line()), 2),
