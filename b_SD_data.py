@@ -6,6 +6,7 @@ def read_data(datafolder, example):
 
     # Read CSV files after defining file paths
     hourly_demand = pd.read_csv(os.path.join(curPath, 'sd_demand.csv'), header=0)
+    capacity_factor = pd.read_csv(os.path.join(curPath, 'sd_cf_original.csv'), header=0)
     sd_ic_line = pd.read_csv(os.path.join(curPath, 'sd_ic_line.csv'), header=0)
     sd_vc_line = pd.read_csv(os.path.join(curPath, 'sd_vc_line.csv'), header=0)
     sd_pre_cap = pd.read_csv(os.path.join(curPath, 'sd_pre_cap.csv'), header=0)
@@ -23,7 +24,7 @@ def read_data(datafolder, example):
     d['TN'] = 5     # Number of planning periods (10-year planning, 5 interval)
     d['NN'] = 4     # Number of representative days (4 average demand from each seaseon)
     d['BN'] = 12    # Number of subperiods (24 hours, 12 interval)
-    d['ST'] = 16   # Number of states
+    d['ST'] = 16    # Number of states
 
     if example == 'n-1':
         d['SC'] = 80   # Number of scenarios
@@ -36,8 +37,12 @@ def read_data(datafolder, example):
     
     # SETS
     d['node'] = list(range(1,d['ND']+1))
-    d['generator'] = ['ng1','ng2','ng3','ng-p']
-    d['gen_pn'] = ['ng-p']
+    d['generator'] = ['ng1','ng2','ng3','ng-p','wt-p']
+    d['dispatch_gen'] = ['ng1','ng2','ng3','ng-p']
+    d['renewable_gen'] = ['wt-p']
+    d['gen_pn'] = ['ng-p','wt-p']
+    d['dis_pn'] = ['ng-p'] 
+    d['res_pn'] = ['wt-p'] 
     d['gen_ex'] = ['ng1','ng2','ng3']
     d['line'] = list(range(1,d['LN']+1))
     d['line_pn'] = [2,3,4,5]
@@ -70,6 +75,15 @@ def read_data(datafolder, example):
         b = hourly_demand['b'].loc[a]
         demand = hourly_demand['D'].loc[a]
         d['load_demand'][(i,t,n,b)] = demand
+
+    d['capacity_factor'] = {}
+    for a in range(capacity_factor.shape[0]):
+        i = capacity_factor['i'].loc[a]
+        t = capacity_factor['t'].loc[a]
+        n = capacity_factor['n'].loc[a]
+        b = capacity_factor['b'].loc[a]
+        factor = capacity_factor['CPF'].loc[a]
+        d['capacity_factor'][(i,t,n,b)] = factor
         
     d['min_opt_dpt'] = {}
     d['min_opt_dpt']['ng1'] = 0.25
@@ -106,12 +120,16 @@ def read_data(datafolder, example):
     d['pre_cap_line'][1] = 300
     
     d['unit_IC'] = {}  # M$/MW
-    for k in d['gen_pn']:
-        d['unit_IC'][k,1] = 0.35
-        d['unit_IC'][k,2] = 0.3395
-        d['unit_IC'][k,3] = 0.329
-        d['unit_IC'][k,4] = 0.3185
-        d['unit_IC'][k,5] = 0.308
+    d['unit_IC']['ng-p',1] = 0.35
+    d['unit_IC']['ng-p',2] = 0.3395
+    d['unit_IC']['ng-p',3] = 0.329
+    d['unit_IC']['ng-p',4] = 0.3185
+    d['unit_IC']['ng-p',5] = 0.308
+    d['unit_IC']['wt-p',1] = 0.525
+    d['unit_IC']['wt-p',2] = 0.5093
+    d['unit_IC']['wt-p',3] = 0.4935
+    d['unit_IC']['wt-p',4] = 0.4775
+    d['unit_IC']['wt-p',5] = 0.462
                  
     d['unit_IC_line'] = {}  # M$/MW
     for a in range(sd_ic_line.shape[0]):
@@ -121,13 +139,32 @@ def read_data(datafolder, example):
         d['unit_IC_line'][(l,t)] = IC_line
 
     d['unit_FC'] = {} # M$/MW
-    for k in d['generator']:
-        d['unit_FC'][k,1] = 0.026
-        d['unit_FC'][k,2] = 0.025
-        d['unit_FC'][k,3] = 0.024
-        d['unit_FC'][k,4] = 0.024
-        d['unit_FC'][k,5] = 0.023
-        
+    d['unit_FC']['ng1',1] = 0.026
+    d['unit_FC']['ng1',2] = 0.025
+    d['unit_FC']['ng1',3] = 0.024
+    d['unit_FC']['ng1',4] = 0.024
+    d['unit_FC']['ng1',5] = 0.023
+    d['unit_FC']['ng2',1] = 0.026
+    d['unit_FC']['ng2',2] = 0.025
+    d['unit_FC']['ng2',3] = 0.024
+    d['unit_FC']['ng2',4] = 0.024
+    d['unit_FC']['ng2',5] = 0.023
+    d['unit_FC']['ng3',1] = 0.026
+    d['unit_FC']['ng3',2] = 0.025
+    d['unit_FC']['ng3',3] = 0.024
+    d['unit_FC']['ng3',4] = 0.024
+    d['unit_FC']['ng3',5] = 0.023
+    d['unit_FC']['ng-p',1] = 0.026
+    d['unit_FC']['ng-p',2] = 0.025
+    d['unit_FC']['ng-p',3] = 0.024
+    d['unit_FC']['ng-p',4] = 0.024
+    d['unit_FC']['ng-p',5] = 0.023
+    d['unit_FC']['wt-p',1] = 0.05
+    d['unit_FC']['wt-p',2] = 0.0485
+    d['unit_FC']['wt-p',3] = 0.047
+    d['unit_FC']['wt-p',4] = 0.0455
+    d['unit_FC']['wt-p',5] = 0.044
+
     d['unit_FC_line'] = {} # M$/MW
     for l in d['line']:
         d['unit_FC_line'][l,1] = 0.005
@@ -137,13 +174,32 @@ def read_data(datafolder, example):
         d['unit_FC_line'][l,5] = 0.0044
         
     d['unit_VC'] = {} # $/MWh (including fuel cost)
-    for k in d['generator']:
-        d['unit_VC'][k,1] = 9.275
-        d['unit_VC'][k,2] = 8.997
-        d['unit_VC'][k,3] = 8.719
-        d['unit_VC'][k,4] = 8.440
-        d['unit_VC'][k,5] = 8.162
-        
+    d['unit_VC']['ng1',1] = 9.275
+    d['unit_VC']['ng1',2] = 8.997
+    d['unit_VC']['ng1',3] = 8.719
+    d['unit_VC']['ng1',4] = 8.440
+    d['unit_VC']['ng1',5] = 8.162
+    d['unit_VC']['ng2',1] = 9.275
+    d['unit_VC']['ng2',2] = 8.997
+    d['unit_VC']['ng2',3] = 8.719
+    d['unit_VC']['ng2',4] = 8.440
+    d['unit_VC']['ng2',5] = 8.162
+    d['unit_VC']['ng3',1] = 9.275
+    d['unit_VC']['ng3',2] = 8.997
+    d['unit_VC']['ng3',3] = 8.719
+    d['unit_VC']['ng3',4] = 8.440
+    d['unit_VC']['ng3',5] = 8.162
+    d['unit_VC']['ng-p',1] = 9.275
+    d['unit_VC']['ng-p',2] = 8.997
+    d['unit_VC']['ng-p',3] = 8.719
+    d['unit_VC']['ng-p',4] = 8.440
+    d['unit_VC']['ng-p',5] = 8.162
+    d['unit_VC']['wt-p',1] = 0
+    d['unit_VC']['wt-p',2] = 0
+    d['unit_VC']['wt-p',3] = 0
+    d['unit_VC']['wt-p',4] = 0
+    d['unit_VC']['wt-p',5] = 0
+
     d['unit_VC_line'] = {} # $/MWh
     for a in range(sd_vc_line.shape[0]):
         l = sd_vc_line['l'].loc[a]
@@ -153,6 +209,12 @@ def read_data(datafolder, example):
     
     d['OG_penalty'] = 10
 
+    d['res_target'] = {}
+    d['res_target'][1] = 0.12
+    d['res_target'][2] = 0.24
+    d['res_target'][3] = 0.36
+    d['res_target'][4] = 0.48
+    d['res_target'][5] = 0.60
 
     # Bounds
     d['ub_IC'] = {}
@@ -203,11 +265,11 @@ def read_data(datafolder, example):
     ###########################################################################################
     ##   Probability of failure method 
 
-    d['min_ins_cap_backup'] = {k: 10 for k in d['gen_pn']}
-    d['max_ins_cap_backup'] = {k: 800 for k in d['gen_pn']}   
+    d['min_ins_cap_backup'] = {k: 10 for k in d['dis_pn']}
+    d['max_ins_cap_backup'] = {k: 800 for k in d['dis_pn']}   
 
     d['unit_IC_backup'] = {}  # M$/MW
-    for k in d['gen_pn']:
+    for k in d['dis_pn']:
         d['unit_IC_backup'][k,1] = 0.42
         d['unit_IC_backup'][k,2] = 0.4074
         d['unit_IC_backup'][k,3] = 0.3948
@@ -215,7 +277,7 @@ def read_data(datafolder, example):
         d['unit_IC_backup'][k,5] = 0.3696
 
     d['unit_FC_backup'] = {} # M$/MW
-    for k in d['gen_pn']:
+    for k in d['dis_pn']:
         d['unit_FC_backup'][k,1] = 0.031
         d['unit_FC_backup'][k,2] = 0.030
         d['unit_FC_backup'][k,3] = 0.029
@@ -248,14 +310,14 @@ def read_data(datafolder, example):
             d['state_indicator_backup'][(i,k,st)] = st_backup
 
     if example == 'dual-yes':
-        d['state_indicator_backup'] = {(i,k,st): 1 for i in d['node'] for k in d['gen_pn'] for st in d['state']}       
+        d['state_indicator_backup'] = {(i,k,st): 1 for i in d['node'] for k in d['dis_pn'] for st in d['state']}       
     
     d['state_indicator_line'] = {(l,st): 1 for l in d['line'] for st in d['state']}    
 
 
     # Bounds
     d['ub_IC_backup'] = {}
-    for k in d['gen_pn']:
+    for k in d['dis_pn']:
         for t in d['year']:
             d['ub_IC_backup'][k,t] = d['max_ins_cap_backup'][k] * d['unit_IC_backup'][k,t]            
     

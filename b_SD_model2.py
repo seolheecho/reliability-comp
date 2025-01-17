@@ -164,8 +164,8 @@ def Reliability_model(data, transformation, formulation):
         m.ppd = pyo.Var(m.node, m.generator, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Power produced')
         m.flow = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Power flow')
         m.flow_pos = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Positive power flow')
-        m.flow_neg = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonPositiveReals, doc='Negative power flow')
-        m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Over-generation') 
+        m.flow_neg = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonPositiveReals, doc='Negative power flow') 
+        m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Over-generation')
         
         @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
         def power_generation_lb(m, i, k, t, n, b):
@@ -213,6 +213,18 @@ def Reliability_model(data, transformation, formulation):
             return sum(m.ppd[i,k,t,n,b] for k in m.generator) + sum(m.flow[l,t,n,b] for l in m.line_to_node[i]) == \
                     m.load_demand[i,t,n,b] + sum(m.flow[l,t,n,b] for l in m.line_fr_node[i]) + m.over_gen[i,t,n,b]
         # m.nodel_power_balance.pprint()                
+
+
+        @m.Constraint(m.year)
+        def renewable_gen_power(m, t):
+            return (
+                sum(m.ppd[i,k,t,n,b]
+                for i in m.node for k in m.renewable_gen for n in m.rpdn for b in m.sub) 
+                - sum(m.over_gen[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub)
+                >= m.res_target[t] 
+                * sum(m.load_demand[i,t,n,b] 
+                      for i in m.node for n in m.rpdn for b in m.sub)
+            )
 
 
         @m.Expression()  # unit: M$
@@ -274,8 +286,8 @@ def Reliability_model(data, transformation, formulation):
         m.ppd = pyo.Var(m.node, m.generator, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Power produced')
         m.flow = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Power flow')
         m.flow_pos = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Positive power flow')
-        m.flow_neg = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonPositiveReals, doc='Negative power flow')
-        m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Over-generation') 
+        m.flow_neg = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonPositiveReals, doc='Negative power flow') 
+        m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Over-generation')
 
         @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
         def operation_reserve_capacity(m, i, k, t, n, b):
@@ -330,7 +342,18 @@ def Reliability_model(data, transformation, formulation):
         def nodal_power_balance(m, i, t, n, b):
             return sum(m.ppd[i,k,t,n,b] for k in m.generator) + sum(m.flow[l,t,n,b] for l in m.line_to_node[i]) == \
                     m.load_demand[i,t,n,b] + sum(m.flow[l,t,n,b] for l in m.line_fr_node[i]) + m.over_gen[i,t,n,b]
-        # m.nodel_power_balance.pprint()                
+        # m.nodel_power_balance.pprint()                 
+        
+        @m.Constraint(m.year)
+        def renewable_gen_power(m, t):
+            return (
+                sum(m.ppd[i,k,t,n,b]
+                for i in m.node for k in m.renewable_gen for n in m.rpdn for b in m.sub) 
+                - sum(m.over_gen[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub)
+                >= m.res_target[t] 
+                * sum(m.load_demand[i,t,n,b] 
+                      for i in m.node for n in m.rpdn for b in m.sub)
+            )
 
 
         @m.Expression()  # unit: M$
@@ -401,8 +424,8 @@ def Reliability_model(data, transformation, formulation):
         m.flow = pyo.Var(m.line, m.year, m.rpdn, m.sub, m.scenario, within=pyo.Reals, doc='Power flow in scenario')
         m.flow_pos = pyo.Var(m.line, m.year, m.rpdn, m.sub, m.scenario, within=pyo.NonNegativeReals, doc='Positive power flow in scenario')
         m.flow_neg = pyo.Var(m.line, m.year, m.rpdn, m.sub, m.scenario, within=pyo.NonPositiveReals, doc='Negative power flow in scenario')  
-        m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, m.scenario, within=pyo.NonNegativeReals, doc='Over-generation in scenario')
-
+        m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, m.scenario, within=pyo.NonNegativeReals, doc='Over-generation')       
+       
         # Potential generators
         @m.Constraint(m.node, m.dis_pn, m.year, m.rpdn, m.scenario)
         def dis_survived_capacity_pn(m, i, k, t, n, sc):
@@ -514,6 +537,17 @@ def Reliability_model(data, transformation, formulation):
             return sum(m.ppd[i,k,t,n,b,sc] for k in m.generator) + sum(m.flow[l,t,n,b,sc] for l in m.line_to_node[i]) == \
                     m.load_demand[i,t,n,b] + sum(m.flow[l,t,n,b,sc] for l in m.line_fr_node[i]) + m.over_gen[i,t,n,b,sc]        
 
+        @m.Constraint(m.year)
+        def renewable_gen_power(m, t):
+            return (
+                sum(m.ppd[i,k,t,n,b,1]
+                for i in m.node for k in m.renewable_gen for n in m.rpdn for b in m.sub)
+                - sum(m.over_gen[i,t,n,b,1] for i in m.node for n in m.rpdn for b in m.sub)
+                >= m.res_target[t] 
+                * sum(m.load_demand[i,t,n,b] 
+                      for i in m.node for n in m.rpdn for b in m.sub)
+            )                           
+        # In N-k reliability, this constraint is only applied to the normal scenario
         
         @m.Expression()  # unit: M$
         def capital_expenditure(m):
@@ -786,6 +820,17 @@ def Reliability_model(data, transformation, formulation):
         def LOLE_limit(m, t):
             return sum(m.weight_time[n] * m.TLOLE[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub) <= 2.4 
 
+        @m.Constraint(m.year)
+        def renewable_gen_power(m, t):
+            return (
+                sum(m.ppd[i,k,t,n,b,1]
+                for i in m.node for k in m.renewable_gen for n in m.rpdn for b in m.sub)
+                - sum(m.over_gen[i,t,n,b,1] for i in m.node for n in m.rpdn for b in m.sub)
+                >= m.res_target[t] 
+                * sum(m.load_demand[i,t,n,b] 
+                      for i in m.node for n in m.rpdn for b in m.sub)
+            )          
+
         
         @m.Expression()  # unit: M$
         def capital_expenditure(m):
@@ -843,7 +888,7 @@ def Reliability_model(data, transformation, formulation):
         def VOC_line(m):
             return sum(m.prob[st] * m.weight_time[n] * m.operation_time[b] * m.unit_VC_line[l,t] * (m.flow_pos[l,t,n,b,st] - m.flow_neg[l,t,n,b,st])  
                        for l in m.line for t in m.year for n in m.rpdn for b in m.sub for st in m.state)/1000000  
-                       
+                    
 
         @m.Expression() # unit: M$
         def EENS_penalties(m):
@@ -864,201 +909,6 @@ def Reliability_model(data, transformation, formulation):
                                                     for l in m.line for t in m.year for n in m.rpdn for b in m.sub for st in m.state)/1000000 +\
                                                         sum(m.weight_time[n] * m.operation_time[b] * m.UD_penalty * m.TEENS[i,t,n,b] for i in m.node for t in m.year for n in m.rpdn for b in m.sub)/1000     
 
-
-    # No reliability design results 
-    # m.cap_ins[1,'ng-p',1].fix(24.9)
-    # m.cap_ins[1,'ng-p',2].fix(57.5)
-    # m.cap_ins[1,'ng-p',3].fix(60.0)
-    # m.cap_ins[1,'ng-p',4].fix(62.8)
-    # m.cap_ins[1,'ng-p',5].fix(65.9)       
-    # m.cap_ins[2,'ng-p',1].fix(0.0)
-    # m.cap_ins[2,'ng-p',2].fix(0.0)
-    # m.cap_ins[2,'ng-p',3].fix(0.0)
-    # m.cap_ins[2,'ng-p',4].fix(0.0)
-    # m.cap_ins[2,'ng-p',5].fix(0.0)    
-    # m.cap_ins[3,'ng-p',1].fix(0.0)
-    # m.cap_ins[3,'ng-p',2].fix(0.0)
-    # m.cap_ins[3,'ng-p',3].fix(0.0)
-    # m.cap_ins[3,'ng-p',4].fix(0.0)
-    # m.cap_ins[3,'ng-p',5].fix(0.0)   
-    # m.cap_ins[4,'ng-p',1].fix(681.4)
-    # m.cap_ins[4,'ng-p',2].fix(86.1)
-    # m.cap_ins[4,'ng-p',3].fix(90.2)
-    # m.cap_ins[4,'ng-p',4].fix(94.2)
-    # m.cap_ins[4,'ng-p',5].fix(98.8)   
-
-    # for i in m.node:
-    #     for k in m.gen_pn:
-    #         for t in m.year:
-    #             m.cap_b[i,k,t].fix(0.0)
-
-    # m.cap_ins_line[2,1].fix(0.0)                   
-    # m.cap_ins_line[2,2].fix(0.0)   
-    # m.cap_ins_line[2,3].fix(0.0)   
-    # m.cap_ins_line[2,4].fix(0.0)   
-    # m.cap_ins_line[2,5].fix(0.0)   
-    # m.cap_ins_line[3,1].fix(0.0)                   
-    # m.cap_ins_line[3,2].fix(0.0)   
-    # m.cap_ins_line[3,3].fix(0.0)   
-    # m.cap_ins_line[3,4].fix(0.0)   
-    # m.cap_ins_line[3,5].fix(0.0)   
-    # m.cap_ins_line[4,1].fix(0.0)                   
-    # m.cap_ins_line[4,2].fix(0.0)   
-    # m.cap_ins_line[4,3].fix(0.0)   
-    # m.cap_ins_line[4,4].fix(0.0)   
-    # m.cap_ins_line[4,5].fix(0.0)   
-    # m.cap_ins_line[5,1].fix(0.0)                   
-    # m.cap_ins_line[5,2].fix(0.0)   
-    # m.cap_ins_line[5,3].fix(0.0)   
-    # m.cap_ins_line[5,4].fix(0.0)   
-    # m.cap_ins_line[5,5].fix(0.0)   
-
-
-    # Reserve design results   
-    # m.cap_ins[1,'ng-p',1].fix(481.77)
-    # m.cap_ins[1,'ng-p',2].fix(0.0)
-    # m.cap_ins[1,'ng-p',3].fix(0.0)
-    # m.cap_ins[1,'ng-p',4].fix(0.0)
-    # m.cap_ins[1,'ng-p',5].fix(0.0)    
-    # m.cap_ins[2,'ng-p',1].fix(0.0)
-    # m.cap_ins[2,'ng-p',2].fix(0.0)
-    # m.cap_ins[2,'ng-p',3].fix(0.0)
-    # m.cap_ins[2,'ng-p',4].fix(0.0)
-    # m.cap_ins[2,'ng-p',5].fix(0.0)    
-    # m.cap_ins[3,'ng-p',1].fix(0.0)
-    # m.cap_ins[3,'ng-p',2].fix(0.0)
-    # m.cap_ins[3,'ng-p',3].fix(0.0)
-    # m.cap_ins[3,'ng-p',4].fix(0.0)
-    # m.cap_ins[3,'ng-p',5].fix(0.0)   
-    # m.cap_ins[4,'ng-p',1].fix(643.34)
-    # m.cap_ins[4,'ng-p',2].fix(723.39)
-    # m.cap_ins[4,'ng-p',3].fix(0.0)
-    # m.cap_ins[4,'ng-p',4].fix(0.0)
-    # m.cap_ins[4,'ng-p',5].fix(0.0)    
-
-    # for i in m.node:
-    #     for k in m.gen_pn:
-    #         for t in m.year:
-    #             m.cap_b[i,k,t].fix(0.0)
-
-    # m.cap_ins_line[2,1].fix(0.0)                   
-    # m.cap_ins_line[2,2].fix(0.0)   
-    # m.cap_ins_line[2,3].fix(0.0)   
-    # m.cap_ins_line[2,4].fix(0.0)   
-    # m.cap_ins_line[2,5].fix(0.0)   
-    # m.cap_ins_line[3,1].fix(0.0)                   
-    # m.cap_ins_line[3,2].fix(0.0)   
-    # m.cap_ins_line[3,3].fix(0.0)   
-    # m.cap_ins_line[3,4].fix(0.0)   
-    # m.cap_ins_line[3,5].fix(0.0)   
-    # m.cap_ins_line[4,1].fix(0.0)                   
-    # m.cap_ins_line[4,2].fix(0.0)   
-    # m.cap_ins_line[4,3].fix(0.0)   
-    # m.cap_ins_line[4,4].fix(0.0)   
-    # m.cap_ins_line[4,5].fix(0.0)   
-    # m.cap_ins_line[5,1].fix(0.0)                   
-    # m.cap_ins_line[5,2].fix(0.0)   
-    # m.cap_ins_line[5,3].fix(0.0)   
-    # m.cap_ins_line[5,4].fix(0.0)   
-    # m.cap_ins_line[5,5].fix(0.0)   
-
-
-    # N-1 reliability design results   
-    # m.cap_ins[1,'ng-p',1].fix(235.5)
-    # m.cap_ins[1,'ng-p',2].fix(47.9)
-    # m.cap_ins[1,'ng-p',3].fix(50.1)
-    # m.cap_ins[1,'ng-p',4].fix(52.4)
-    # m.cap_ins[1,'ng-p',5].fix(54.9)   
-    # m.cap_ins[2,'ng-p',1].fix(235.5)
-    # m.cap_ins[2,'ng-p',2].fix(47.9)
-    # m.cap_ins[2,'ng-p',3].fix(50.1)
-    # m.cap_ins[2,'ng-p',4].fix(52.4)
-    # m.cap_ins[2,'ng-p',5].fix(54.9)    
-    # m.cap_ins[3,'ng-p',1].fix(235.5)
-    # m.cap_ins[3,'ng-p',2].fix(47.9)
-    # m.cap_ins[3,'ng-p',3].fix(50.1)
-    # m.cap_ins[3,'ng-p',4].fix(52.4)
-    # m.cap_ins[3,'ng-p',5].fix(54.9)   
-    # m.cap_ins[4,'ng-p',1].fix(235.5)
-    # m.cap_ins[4,'ng-p',2].fix(47.9)
-    # m.cap_ins[4,'ng-p',3].fix(50.1)
-    # m.cap_ins[4,'ng-p',4].fix(52.4)
-    # m.cap_ins[4,'ng-p',5].fix(54.9) 
-
-    # for i in m.node:
-    #     for k in m.gen_pn:
-    #         for t in m.year:
-    #             m.cap_b[i,k,t].fix(0.0)
-
-    # m.cap_ins_line[2,1].fix(155.9)                   
-    # m.cap_ins_line[2,2].fix(0.0)   
-    # m.cap_ins_line[2,3].fix(0.0)   
-    # m.cap_ins_line[2,4].fix(0.0)   
-    # m.cap_ins_line[2,5].fix(0.0)   
-    # m.cap_ins_line[3,1].fix(0.0)                   
-    # m.cap_ins_line[3,2].fix(0.0)   
-    # m.cap_ins_line[3,3].fix(0.0)   
-    # m.cap_ins_line[3,4].fix(0.0)   
-    # m.cap_ins_line[3,5].fix(0.0)   
-    # m.cap_ins_line[4,1].fix(79.1)                   
-    # m.cap_ins_line[4,2].fix(32.5)   
-    # m.cap_ins_line[4,3].fix(34.1)   
-    # m.cap_ins_line[4,4].fix(35.6)   
-    # m.cap_ins_line[4,5].fix(37.3)   
-    # m.cap_ins_line[5,1].fix(200.1)                   
-    # m.cap_ins_line[5,2].fix(40.7)   
-    # m.cap_ins_line[5,3].fix(42.6)   
-    # m.cap_ins_line[5,4].fix(44.5)   
-    # m.cap_ins_line[5,5].fix(46.7)   
-    
-    # N-2 reliability design results   
-    # m.cap_ins[1,'ng-p',1].fix(353.2)
-    # m.cap_ins[1,'ng-p',2].fix(71.8)
-    # m.cap_ins[1,'ng-p',3].fix(75.1)
-    # m.cap_ins[1,'ng-p',4].fix(78.5)
-    # m.cap_ins[1,'ng-p',5].fix(82.4)    
-    # m.cap_ins[2,'ng-p',1].fix(353.2)
-    # m.cap_ins[2,'ng-p',2].fix(71.8)
-    # m.cap_ins[2,'ng-p',3].fix(75.1)
-    # m.cap_ins[2,'ng-p',4].fix(78.5)
-    # m.cap_ins[2,'ng-p',5].fix(82.4)    
-    # m.cap_ins[3,'ng-p',1].fix(353.2)
-    # m.cap_ins[3,'ng-p',2].fix(71.8)
-    # m.cap_ins[3,'ng-p',3].fix(75.1)
-    # m.cap_ins[3,'ng-p',4].fix(78.5)
-    # m.cap_ins[3,'ng-p',5].fix(82.4)   
-    # m.cap_ins[4,'ng-p',1].fix(353.2)
-    # m.cap_ins[4,'ng-p',2].fix(71.8)
-    # m.cap_ins[4,'ng-p',3].fix(75.1)
-    # m.cap_ins[4,'ng-p',4].fix(78.5)
-    # m.cap_ins[4,'ng-p',5].fix(82.4)   
-
-    # for i in m.node:
-    #     for k in m.gen_pn:
-    #         for t in m.year:
-    #             m.cap_b[i,k,t].fix(0.0)
-
-    # m.cap_ins_line[2,1].fix(140.6)                   
-    # m.cap_ins_line[2,2].fix(48.9)   
-    # m.cap_ins_line[2,3].fix(23.1)   
-    # m.cap_ins_line[2,4].fix(50.7)   
-    # m.cap_ins_line[2,5].fix(17.7)   
-    # m.cap_ins_line[3,1].fix(119.6)                   
-    # m.cap_ins_line[3,2].fix(61.1)   
-    # m.cap_ins_line[3,3].fix(35.9)   
-    # m.cap_ins_line[3,4].fix(29.4)   
-    # m.cap_ins_line[3,5].fix(66.4)   
-    # m.cap_ins_line[4,1].fix(159.6)                   
-    # m.cap_ins_line[4,2].fix(12.2)   
-    # m.cap_ins_line[4,3].fix(40.8)   
-    # m.cap_ins_line[4,4].fix(50.7)   
-    # m.cap_ins_line[4,5].fix(17.7)   
-    # m.cap_ins_line[5,1].fix(180.6)                   
-    # m.cap_ins_line[5,2].fix(0.0)   
-    # m.cap_ins_line[5,3].fix(35.9)   
-    # m.cap_ins_line[5,4].fix(29.4)   
-    # m.cap_ins_line[5,5].fix(66.4)       
-
     transformation_string = 'gdp.' + transformation 
     pyo.TransformationFactory(transformation_string).apply_to(m)
 
@@ -1066,8 +916,8 @@ def Reliability_model(data, transformation, formulation):
     return m
 
 if __name__ == "__main__":
-    d = read_data(datafolder="San Diego", example='dual-no')
-    m = Reliability_model(d, transformation='bigm', formulation='prob')
+    d = read_data(datafolder="San Diego", example='n-1')
+    m = Reliability_model(d, transformation='bigm', formulation='no')
 
     opt = pyo.SolverFactory('gurobi')
 
@@ -1095,8 +945,8 @@ if __name__ == "__main__":
 
 
     results = {}
-    tot_results = [m.cap_ins, m.cap_ins_line, m.cap_bn, m.cap_ava, m.cap_ava_line, m.cap_b]
-    # tot_results = [m.cap_ins, m.cap_ins_line, m.cap_ava, m.cap_ava_line]
+    # tot_results = [m.cap_ins, m.cap_ins_line, m.cap_bn, m.cap_ava, m.cap_ava_line, m.cap_b]
+    tot_results = [m.cap_ins, m.cap_ins_line, m.cap_ava, m.cap_ava_line]
     
     
     for var_group in tot_results:
@@ -1111,25 +961,30 @@ if __name__ == "__main__":
     df_results_transpose = df_results.transpose()
     df_results_transpose.to_excel("opt_results.xlsx")  
 
-    for t in m.year:
-        print("LOLE every year", round(sum(m.weight_time[n] * m.TLOLE[i,t,n,b].value for i in m.node for n in m.rpdn for b in m.sub), 3),
-              "EENS every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.TEENS[i,t,n,b].value for i in m.node for n in m.rpdn for b in m.sub), 3),
-              "Demand every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.load_demand[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub), 3)  
-        )
-            
-    print("CAPEX", round(value(m.capital_expenditure()), 2), "| IC_Gen", round(value(m.IC_generator()), 2), "| IC_Line", round(value(m.IC_line()), 2), "| IC_backup", round(value(m.IC_backup()), 2),
-          "| OPEX", round(value(m.operating_expenses()), 2), "| FC_Gen", round(value(m.FOC_generator()), 2), "| FC_Line", round(value(m.FOC_line()), 2), "| FC_backup", round(value(m.FOC_backup()), 2),
-          "| VC_Gen", round(value(m.VOC_generator()), 2), "| VC_Line", round(value(m.VOC_line()), 2), "| VC_Backup", round(value(m.VOC_backup()), 2), "| EENS penalty", round(value(m.EENS_penalties()), 2),
-          "| Over generation", round(sum(m.over_gen[i,t,n,b,st].value for i in m.node for t in m.year for n in m.rpdn for b in m.sub for st in m.state), 2)
-          )
-    
     # for t in m.year:
-    #     print("Demand every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.load_demand[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub), 3)  
-    #     )    
+    #     print("LOLE every year", round(sum(m.weight_time[n] * m.TLOLE[i,t,n,b].value for i in m.node for n in m.rpdn for b in m.sub), 3),
+    #           "EENS every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.TEENS[i,t,n,b].value for i in m.node for n in m.rpdn for b in m.sub), 3),
+    #           "Demand every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.load_demand[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub), 3),
+    #           "Over generation", round(sum(m.prob[st] * m.weight_time[n] * m.operation_time[b] * m.over_gen[i,t,n,b,st].value for i in m.node for n in m.rpdn for b in m.sub for st in m.state), 2),
+    #           "Dispatch_power", round(sum(m.prob[1] * m.weight_time[n] * m.operation_time[b] * m.ppd[i,k,t,n,b,1].value for i in m.node for k in m.dispatch_gen for n in m.rpdn for b in m.sub), 2),
+    #           "RES_power", round(sum(m.prob[1] * m.weight_time[n] * m.operation_time[b] * m.ppd[i,k,t,n,b,1].value for i in m.node for k in m.renewable_gen for n in m.rpdn for b in m.sub), 2)
+    #     )
+            
+    # print("CAPEX", round(value(m.capital_expenditure()), 2), "| IC_Gen", round(value(m.IC_generator()), 2), "| IC_Line", round(value(m.IC_line()), 2), "| IC_backup", round(value(m.IC_backup()), 2),
+    #       "| OPEX", round(value(m.operating_expenses()), 2), "| FC_Gen", round(value(m.FOC_generator()), 2), "| FC_Line", round(value(m.FOC_line()), 2), "| FC_backup", round(value(m.FOC_backup()), 2),
+    #       "| VC_Gen", round(value(m.VOC_generator()), 2), "| VC_Line", round(value(m.VOC_line()), 2), "| VC_Backup", round(value(m.VOC_backup()), 2), "| EENS penalty", round(value(m.EENS_penalties()), 2)
+    #       )
     
-    # print("CAPEX", round(value(m.capital_expenditure()), 2), "| IC_Gen", round(value(m.IC_generator()), 2), "| IC_Line", round(value(m.IC_line()), 2), 
-    #       "| OPEX", round(value(m.operating_expenses()), 2), "| FC_Gen", round(value(m.FOC_generator()), 2), "| FC_Line", round(value(m.FOC_line()), 2),
-    #       "| VC_Gen", round(value(m.VOC_generator()), 2), "| VC_Line", round(value(m.VOC_line()), 2)
-    #       )    
+    for t in m.year:
+        print("Demand every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.load_demand[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub), 3),
+              "RES_power", round(sum(m.weight_time[n] * m.operation_time[b] * m.ppd[i,k,t,n,b].value for i in m.node for k in m.renewable_gen for n in m.rpdn for b in m.sub), 2),  
+              "DIS_power", round(sum(m.weight_time[n] * m.operation_time[b] * m.ppd[i,k,t,n,b].value for i in m.node for k in m.dispatch_gen for n in m.rpdn for b in m.sub), 2),
+              "Over generation", round(sum(m.weight_time[n] * m.operation_time[b] * m.over_gen[i,t,n,b].value for i in m.node for n in m.rpdn for b in m.sub), 2)
+        )    
+    
+    print("CAPEX", round(value(m.capital_expenditure()), 2), "| IC_Gen", round(value(m.IC_generator()), 2), "| IC_Line", round(value(m.IC_line()), 2), 
+          "| OPEX", round(value(m.operating_expenses()), 2), "| FC_Gen", round(value(m.FOC_generator()), 2), "| FC_Line", round(value(m.FOC_line()), 2),
+          "| VC_Gen", round(value(m.VOC_generator()), 2), "| VC_Line", round(value(m.VOC_line()), 2)
+          )    
 
 

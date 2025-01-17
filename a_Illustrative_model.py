@@ -107,8 +107,6 @@ def Reliability_model(transformation, formulation, datafolder):
         unit_VC_line[l,3] = 0.4          
     m.unit_VC_line = pyo.Param(m.line, m.year, within=pyo.NonNegativeReals, initialize=unit_VC_line) # unit: $
     
-    m.OG_penalty = pyo.Param(within=pyo.NonNegativeReals, initialize=1)
-    
     
     # Bounds
     ub_IC = {}
@@ -208,7 +206,7 @@ def Reliability_model(transformation, formulation, datafolder):
         m.flow = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.Reals, doc='Power flow')
         m.flow_pos = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Positive power flow')
         m.flow_neg = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonPositiveReals, doc='Negative power flow')
-        # m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Excess power')              
+        m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Excess power')              
         
         @m.Constraint(m.node, m.generator, m.year, m.rpdn, m.sub)
         def power_generation_lb(m, i, k, t, n, b):
@@ -250,8 +248,8 @@ def Reliability_model(transformation, formulation, datafolder):
         
         @m.Constraint(m.node, m.year, m.rpdn, m.sub)
         def nodal_power_balance(m, i, t, n, b):
-            return sum(m.ppd[i,k,t,n,b] for k in m.generator) + sum(m.flow[l,t,n,b] for l in m.line_to_node[i]) >= \
-                    m.load_demand[i,t,n,b] + sum(m.flow[l,t,n,b] for l in m.line_fr_node[i])
+            return sum(m.ppd[i,k,t,n,b] for k in m.generator) + sum(m.flow[l,t,n,b] for l in m.line_to_node[i]) == \
+                    m.load_demand[i,t,n,b] + sum(m.flow[l,t,n,b] for l in m.line_fr_node[i]) + m.over_gen[i,t,n,b]
         # m.nodel_power_balance.pprint()           
         
         
@@ -327,7 +325,7 @@ def Reliability_model(transformation, formulation, datafolder):
         m.flow = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.Reals, doc='Power flow')       
         m.flow_pos = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Positive power flow')
         m.flow_neg = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonPositiveReals, doc='Negative power flow') 
-        # m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Excess power')   
+        m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Excess power')   
     
         @m.Constraint(m.node, m.generator, m.year, m.rpdn, m.sub)
         def operation_reserve_capacity(m, i, k, t, n, b):
@@ -377,8 +375,8 @@ def Reliability_model(transformation, formulation, datafolder):
         
         @m.Constraint(m.node, m.year, m.rpdn, m.sub)
         def nodal_power_balance(m, i, t, n, b):
-            return sum(m.ppd[i,k,t,n,b] for k in m.generator) + sum(m.flow[l,t,n,b] for l in m.line_to_node[i]) >= \
-                    m.load_demand[i,t,n,b] + sum(m.flow[l,t,n,b] for l in m.line_fr_node[i])
+            return sum(m.ppd[i,k,t,n,b] for k in m.generator) + sum(m.flow[l,t,n,b] for l in m.line_to_node[i]) == \
+                    m.load_demand[i,t,n,b] + sum(m.flow[l,t,n,b] for l in m.line_fr_node[i]) + m.over_gen[i,t,n,b]
         # m.nodel_power_balance.pprint()                
         
 
@@ -474,7 +472,7 @@ def Reliability_model(transformation, formulation, datafolder):
         m.flow = pyo.Var(m.line, m.year, m.rpdn, m.sub, m.scenario, within=pyo.Reals, doc='Power flow in scenario')
         m.flow_pos = pyo.Var(m.line, m.year, m.rpdn, m.sub, m.scenario, within=pyo.NonNegativeReals, doc='Positive power flow in scenario')
         m.flow_neg = pyo.Var(m.line, m.year, m.rpdn, m.sub, m.scenario, within=pyo.NonPositiveReals, doc='Negative power flow in scenario')
-        # m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, m.scenario, within=pyo.NonNegativeReals, doc='Excess power in scenario')      
+        m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, m.scenario, within=pyo.NonNegativeReals, doc='Excess power in scenario')      
                         
     
         @m.Constraint(m.node, m.generator, m.year, m.rpdn, m.scenario)
@@ -524,8 +522,8 @@ def Reliability_model(transformation, formulation, datafolder):
         
         @m.Constraint(m.node, m.year, m.rpdn, m.sub, m.scenario)
         def nodal_power_balance(m, i, t, n, b, sc):
-            return sum(m.ppd[i,k,t,n,b,sc] for k in m.generator) + sum(m.flow[l,t,n,b,sc] for l in m.line_to_node[i]) >= \
-                    m.load_demand[i,t,n,b] + sum(m.flow[l,t,n,b,sc] for l in m.line_fr_node[i])
+            return sum(m.ppd[i,k,t,n,b,sc] for k in m.generator) + sum(m.flow[l,t,n,b,sc] for l in m.line_to_node[i]) == \
+                    m.load_demand[i,t,n,b] + sum(m.flow[l,t,n,b,sc] for l in m.line_fr_node[i]) + m.over_gen[i,t,n,b,sc]
         # for i in m.node:
         #     m.nodal_power_balance[i,1,1,1,1].pprint()              
                 
@@ -578,10 +576,6 @@ def Reliability_model(transformation, formulation, datafolder):
             return sum(m.scenario_rate[sc] * m.weight_time[n] * m.operation_time[b] * m.unit_VC_line[l,t] * (m.flow_pos[l,t,n,b,sc] - m.flow_neg[l,t,n,b,sc])  
                        for l in m.line for t in m.year for n in m.rpdn for b in m.sub for sc in m.scenario)/1000000    
             
-        # @m.Expression()
-        # def OG_pen(m):
-        #     return sum(m.scenario_rate[sc] * m.weight_time[n] * m.operation_time[b] * m.OG_penalty * m.over_gen[i,t,n,b,sc] 
-        #                for i in m.node for t in m.year for n in m.rpdn for b in m.sub for sc in m.scenario)/1000    
                 
         @m.Objective(sense=pyo.minimize)   # unit: M$
         def obj(m):
@@ -592,8 +586,6 @@ def Reliability_model(transformation, formulation, datafolder):
                             for i in m.node for k in m.generator for t in m.year for n in m.rpdn for b in m.sub for sc in m.scenario)/1000000 +\
                                 sum(m.scenario_rate[sc] * m.weight_time[n] * m.operation_time[b] * m.unit_VC_line[l,t] * (m.flow_pos[l,t,n,b,sc] - m.flow_neg[l,t,n,b,sc]) 
                                     for l in m.line for t in m.year for n in m.rpdn for b in m.sub for sc in m.scenario)/1000000
-                                        # sum(m.scenario_rate[sc] * m.weight_time[n] * m.operation_time[b] * m.OG_penalty * m.over_gen[i,t,n,b,sc] 
-                                        #     for i in m.node for t in m.year for n in m.rpdn for b in m.sub for sc in m.scenario)/1000             
 
 
 
@@ -626,7 +618,7 @@ def Reliability_model(transformation, formulation, datafolder):
         m.flow = pyo.Var(m.line, m.year, m.rpdn, m.sub, m.scenario, within=pyo.Reals, doc='Power flow in scenario')
         m.flow_pos = pyo.Var(m.line, m.year, m.rpdn, m.sub, m.scenario, within=pyo.NonNegativeReals, doc='Positive power flow in scenario')
         m.flow_neg = pyo.Var(m.line, m.year, m.rpdn, m.sub, m.scenario, within=pyo.NonPositiveReals, doc='Negative power flow in scenario')
-        # m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, m.scenario, within=pyo.NonNegativeReals, doc='Excess power in scenario')      
+        m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, m.scenario, within=pyo.NonNegativeReals, doc='Excess power in scenario')      
                         
     
         @m.Constraint(m.node, m.generator, m.year, m.rpdn, m.scenario)
@@ -676,8 +668,8 @@ def Reliability_model(transformation, formulation, datafolder):
         
         @m.Constraint(m.node, m.year, m.rpdn, m.sub, m.scenario)
         def nodal_power_balance(m, i, t, n, b, sc):
-            return sum(m.ppd[i,k,t,n,b,sc] for k in m.generator) + sum(m.flow[l,t,n,b,sc] for l in m.line_to_node[i]) >= \
-                    m.load_demand[i,t,n,b] + sum(m.flow[l,t,n,b,sc] for l in m.line_fr_node[i])
+            return sum(m.ppd[i,k,t,n,b,sc] for k in m.generator) + sum(m.flow[l,t,n,b,sc] for l in m.line_to_node[i]) == \
+                    m.load_demand[i,t,n,b] + sum(m.flow[l,t,n,b,sc] for l in m.line_fr_node[i]) + m.over_gen[i,t,n,b,sc]
         # for i in m.node:
         #     m.nodal_power_balance[i,1,1,1,1].pprint()              
                 
@@ -730,10 +722,6 @@ def Reliability_model(transformation, formulation, datafolder):
             return sum(m.scenario_rate[sc] * m.weight_time[n] * m.operation_time[b] * m.unit_VC_line[l,t] * (m.flow_pos[l,t,n,b,sc] - m.flow_neg[l,t,n,b,sc])  
                        for l in m.line for t in m.year for n in m.rpdn for b in m.sub for sc in m.scenario)/1000000    
             
-        # @m.Expression()
-        # def OG_pen(m):
-        #     return sum(m.scenario_rate[sc] * m.weight_time[n] * m.operation_time[b] * m.OG_penalty * m.over_gen[i,t,n,b,sc] 
-        #                for i in m.node for t in m.year for n in m.rpdn for b in m.sub for sc in m.scenario)/1000    
                 
         @m.Objective(sense=pyo.minimize)   # unit: M$
         def obj(m):
@@ -744,8 +732,6 @@ def Reliability_model(transformation, formulation, datafolder):
                             for i in m.node for k in m.generator for t in m.year for n in m.rpdn for b in m.sub for sc in m.scenario)/1000000 +\
                                 sum(m.scenario_rate[sc] * m.weight_time[n] * m.operation_time[b] * m.unit_VC_line[l,t] * (m.flow_pos[l,t,n,b,sc] - m.flow_neg[l,t,n,b,sc]) 
                                     for l in m.line for t in m.year for n in m.rpdn for b in m.sub for sc in m.scenario)/1000000 
-                                        # sum(m.scenario_rate[sc] * m.weight_time[n] * m.operation_time[b] * m.OG_penalty * m.over_gen[i,t,n,b,sc] 
-                                        #     for i in m.node for t in m.year for n in m.rpdn for b in m.sub for sc in m.scenario)/1000  
 
     
     
@@ -985,9 +971,9 @@ def Reliability_model(transformation, formulation, datafolder):
         def total_EENS(m, i, t, n, b):
             return m.TEENS[i,t,n,b] == sum(m.prob[st] * m.EENS[i,t,n,b,st] for st in m.state)
 
-        # @m.Constraint(m.year)
-        # def LOLE_limit(m, t):
-        #     return sum(m.weight_time[n] * m.TLOLE[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub) <= 2.4 
+        @m.Constraint(m.year)
+        def LOLE_limit(m, t):
+            return sum(m.weight_time[n] * m.TLOLE[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub) <= 2.4 
         
         
         @m.Expression()  # unit: M$
@@ -1039,11 +1025,7 @@ def Reliability_model(transformation, formulation, datafolder):
         def VOC_line(m):
             return sum(m.prob[st] * m.weight_time[n] * m.operation_time[b] * m.unit_VC_line[l,t] * (m.flow_pos[l,t,n,b,st] - m.flow_neg[l,t,n,b,st])  
                        for l in m.line for t in m.year for n in m.rpdn for b in m.sub for st in m.state)/1000000  
-        
-        @m.Expression()
-        def OG_pen(m):
-            return sum(m.prob[st] * m.weight_time[n] * m.operation_time[b] * m.OG_penalty * m.over_gen[i,t,n,b,st] 
-                       for i in m.node for t in m.year for n in m.rpdn for b in m.sub for st in m.state)/1000                 
+                    
 
         @m.Expression() # unit: M$
         def EENS_penalties(m):
@@ -1060,9 +1042,7 @@ def Reliability_model(transformation, formulation, datafolder):
                                     for i in m.node for k in m.generator for t in m.year for n in m.rpdn for b in m.sub for st in m.state)/1000000 +\
                                         sum(m.prob[st] * m.weight_time[n] * m.operation_time[b] * m.unit_VC_line[l,t] * (m.flow_pos[l,t,n,b,st] - m.flow_neg[l,t,n,b,st]) 
                                             for l in m.line for t in m.year for n in m.rpdn for b in m.sub for st in m.state)/1000000 +\
-                                                sum(m.prob[st] * m.weight_time[n] * m.operation_time[b] * m.OG_penalty * m.over_gen[i,t,n,b,st] 
-                                                    for i in m.node for t in m.year for n in m.rpdn for b in m.sub for st in m.state)/1000 +\
-                                                        sum(m.weight_time[n] * m.operation_time[b] * m.UD_penalty * m.TEENS[i,t,n,b] for i in m.node for t in m.year for n in m.rpdn for b in m.sub)/1000     
+                                                sum(m.weight_time[n] * m.operation_time[b] * m.UD_penalty * m.TEENS[i,t,n,b] for i in m.node for t in m.year for n in m.rpdn for b in m.sub)/1000     
 
 
         # @m.Objective(sense=pyo.minimize)
@@ -1350,11 +1330,7 @@ def Reliability_model(transformation, formulation, datafolder):
         def VOC_line(m):
             return sum(m.prob[st] * m.weight_time[n] * m.operation_time[b] * m.unit_VC_line[l,t] * (m.flow_pos[l,t,n,b,st] - m.flow_neg[l,t,n,b,st])  
                        for l in m.line for t in m.year for n in m.rpdn for b in m.sub for st in m.state)/1000000  
-        
-        @m.Expression()
-        def OG_pen(m):
-            return sum(m.prob[st] * m.weight_time[n] * m.operation_time[b] * m.OG_penalty * m.over_gen[i,t,n,b,st] 
-                       for i in m.node for t in m.year for n in m.rpdn for b in m.sub for st in m.state)/1000                 
+                     
 
         @m.Expression() # unit: M$
         def EENS_penalties(m):
@@ -1371,9 +1347,7 @@ def Reliability_model(transformation, formulation, datafolder):
                                     for i in m.node for k in m.generator for t in m.year for n in m.rpdn for b in m.sub for st in m.state)/1000000 +\
                                         sum(m.prob[st] * m.weight_time[n] * m.operation_time[b] * m.unit_VC_line[l,t] * (m.flow_pos[l,t,n,b,st] - m.flow_neg[l,t,n,b,st]) 
                                             for l in m.line for t in m.year for n in m.rpdn for b in m.sub for st in m.state)/1000000 +\
-                                                sum(m.prob[st] * m.weight_time[n] * m.operation_time[b] * m.OG_penalty * m.over_gen[i,t,n,b,st] 
-                                                    for i in m.node for t in m.year for n in m.rpdn for b in m.sub for st in m.state)/1000 +\
-                                                        sum(m.weight_time[n] * m.operation_time[b] * m.UD_penalty * m.TEENS[i,t,n,b] for i in m.node for t in m.year for n in m.rpdn for b in m.sub)/1000   
+                                                sum(m.weight_time[n] * m.operation_time[b] * m.UD_penalty * m.TEENS[i,t,n,b] for i in m.node for t in m.year for n in m.rpdn for b in m.sub)/1000   
 
 
     # No reliability design results   
@@ -1479,7 +1453,7 @@ def Reliability_model(transformation, formulation, datafolder):
     return m
 
 if __name__ == "__main__":
-    m = Reliability_model(transformation='bigm', formulation='n-2', datafolder='Illustrative')
+    m = Reliability_model(transformation='bigm', formulation='prob-dual', datafolder='Illustrative')
 
     opt = pyo.SolverFactory('gurobi')
     opt.options['Threads'] = 8
@@ -1494,8 +1468,8 @@ if __name__ == "__main__":
 
     results = {}
     # tot_results = [m.ls, m.LOLE, m.EENS, m.TLOLE, m.TEENS]
-    # tot_results = [m.cap_ins, m.cap_ins_line, m.cap_bn, m.cap_ava, m.cap_ava_line, m.cap_b, m.ppd, m.ppd_b, m.flow, m.over_gen]
-    tot_results = [m.cap_ins, m.cap_ins_line, m.cap_ava, m.cap_ava_line, m.ppd, m.flow]
+    tot_results = [m.cap_ins, m.cap_ins_line, m.cap_bn, m.cap_ava, m.cap_ava_line, m.cap_b, m.ppd, m.ppd_b, m.flow, m.over_gen]
+    # tot_results = [m.cap_ins, m.cap_ins_line, m.cap_ava, m.cap_ava_line, m.ppd, m.flow]
     
     
     for var_group in tot_results:
@@ -1510,27 +1484,26 @@ if __name__ == "__main__":
     df_results_transpose = df_results.transpose()
     df_results_transpose.to_excel("opt_results.xlsx")  
             
-    # for t in m.year:
-    #     print("LOLE every year", round(sum(m.weight_time[n] * m.TLOLE[i,t,n,b].value for i in m.node for n in m.rpdn for b in m.sub), 3),
-    #           "EENS every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.TEENS[i,t,n,b].value for i in m.node for n in m.rpdn for b in m.sub), 3),
-    #           "Demand every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.load_demand[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub), 3)  
-    #     )
+    for t in m.year:
+        print("LOLE every year", round(sum(m.weight_time[n] * m.TLOLE[i,t,n,b].value for i in m.node for n in m.rpdn for b in m.sub), 3),
+              "EENS every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.TEENS[i,t,n,b].value for i in m.node for n in m.rpdn for b in m.sub), 3),
+              "Demand every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.load_demand[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub), 3)  
+        )
             
-    # print("CAPEX", round(value(m.capital_expenditure()), 2), "| IC_Gen", round(value(m.IC_generator()), 2), "| IC_Line", round(value(m.IC_line()), 2), "| IC_backup", round(value(m.IC_backup()), 2),
-    #       "| OPEX", round(value(m.operating_expenses()), 2), "| FC_Gen", round(value(m.FOC_generator()), 2), "| FC_Line", round(value(m.FOC_line()), 2), "| FC_backup", round(value(m.FOC_backup()), 2),
-    #       "| VC_Gen", round(value(m.VOC_generator_backup()), 2), "| VC_Line", round(value(m.VOC_line()), 2),
-    #       "| Over-gen penalty", round(value(m.OG_pen()), 2), "| Over generation", round(sum(m.over_gen[i,t,n,b,st].value for i in m.node for t in m.year for n in m.rpdn for b in m.sub for st in m.state), 2),
-    #       "| EENS penalty", round(value(m.EENS_penalties()), 2)
-    #       )
+    print("CAPEX", round(value(m.capital_expenditure()), 2), "| IC_Gen", round(value(m.IC_generator()), 2), "| IC_Line", round(value(m.IC_line()), 2), "| IC_backup", round(value(m.IC_backup()), 2),
+          "| OPEX", round(value(m.operating_expenses()), 2), "| FC_Gen", round(value(m.FOC_generator()), 2), "| FC_Line", round(value(m.FOC_line()), 2), "| FC_backup", round(value(m.FOC_backup()), 2),
+          "| VC_Gen", round(value(m.VOC_generator_backup()), 2), "| VC_Line", round(value(m.VOC_line()), 2), "| EENS penalty", round(value(m.EENS_penalties()), 2),
+          "| Over generation", round(sum(m.over_gen[i,t,n,b,st].value for i in m.node for t in m.year for n in m.rpdn for b in m.sub for st in m.state), 2)
+          )
 
     # for t in m.year:
     #     print("Demand every year", round(sum(m.weight_time[n] * m.operation_time[b] * m.load_demand[i,t,n,b] for i in m.node for n in m.rpdn for b in m.sub), 3)  
     #     )
     
-    print("CAPEX", round(value(m.capital_expenditure()), 2), "| IC_Gen", round(value(m.IC_generator()), 2), "| IC_Line", round(value(m.IC_line()), 2), 
-          "| OPEX", round(value(m.operating_expenses()), 2), "| FC_Gen", round(value(m.FOC_generator()), 2), "| FC_Line", round(value(m.FOC_line()), 2),
-          "| VC_Gen", round(value(m.VOC_generator()), 2), "| VC_Line", round(value(m.VOC_line()), 2)
-          )    
+    # print("CAPEX", round(value(m.capital_expenditure()), 2), "| IC_Gen", round(value(m.IC_generator()), 2), "| IC_Line", round(value(m.IC_line()), 2), 
+    #       "| OPEX", round(value(m.operating_expenses()), 2), "| FC_Gen", round(value(m.FOC_generator()), 2), "| FC_Line", round(value(m.FOC_line()), 2),
+    #       "| VC_Gen", round(value(m.VOC_generator()), 2), "| VC_Line", round(value(m.VOC_line()), 2)
+    #       )    
 
 
 
