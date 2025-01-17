@@ -1,6 +1,8 @@
 __author__ = "Seolhee Cho"
 
 import pyomo.environ as pyo
+from example_data import read_data
+from utility import solve_model
 
 def no_reliability_model(data, renewable):
     
@@ -272,5 +274,15 @@ def no_reliability_model(data, renewable):
                                 sum(m.weight_time[n] * m.operation_time[b] * m.unit_VC_line[l,t] * (m.flow_pos[l,t,n,b] - m.flow_neg[l,t,n,b]) 
                                     for l in m.line for t in m.year for n in m.rpdn for b in m.sub)/1000000
 
+    transformation_string = 'gdp.bigm'
+    pyo.TransformationFactory(transformation_string).apply_to(m)
        
     return m
+
+
+if __name__ == "__main__":
+    status = None
+    data = read_data(datafolder="San Diego", advanced=status)
+    m = no_reliability_model(data, renewable=True)
+
+    m = solve_model(m, advanced=status, time_limit=1000, abs_gap=0.01, threads=8)
