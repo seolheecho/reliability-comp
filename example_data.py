@@ -30,6 +30,7 @@ def read_data(datafolder, advanced=None):
     prob = pd.read_csv(os.path.join(curPath, 'prob.csv'), header=0)
     ramp_down = pd.read_csv(os.path.join(curPath, 'ramp_down.csv'), header=0)
     ramp_up = pd.read_csv(os.path.join(curPath, 'ramp_up.csv'), header=0)
+    res_target = pd.read_csv(os.path.join(curPath, 'res_target.csv'), header=0)   
     scenario_indicator_gen_n1 = pd.read_csv(os.path.join(curPath, 'scenario_indicator_gen_n1.csv'), header=0)
     scenario_indicator_gen_n2 = pd.read_csv(os.path.join(curPath, 'scenario_indicator_gen_n2.csv'), header=0)
     scenario_indicator_line_n1 = pd.read_csv(os.path.join(curPath, 'scenario_indicator_line_n1.csv'), header=0)
@@ -201,6 +202,7 @@ def read_data(datafolder, advanced=None):
     d['max_opt_dpt'] = {row['k']: row['max_opt'] for _, row in max_opt_gen.iterrows()}
     d['ramp_up'] = {row['k']: row['ramp_up'] for _, row in ramp_up.iterrows()}
     d['ramp_down'] = {row['k']: row['ramp_down'] for _, row in ramp_down.iterrows()}
+    d['res_target'] = {row['t']: row['res_target'] for _, row in res_target.iterrows()}   
     d['pre_cap'] = {(row['i'], row['k']): row['pre_cap'] for _, row in pre_cap_gen.iterrows()}   
     d['pre_cap_line'] = {row['l']: row['pre_cap'] for _, row in pre_cap_line.iterrows()}  
 
@@ -214,13 +216,6 @@ def read_data(datafolder, advanced=None):
     d['unit_VC'] = {(row['k'], row['t']): row['vc_gen'] for _, row in vc_gen.iterrows()}         # $/MWh (including fuel cost)
     d['unit_VC_line'] = {(row['l'], row['t']): row['vc_line'] for _, row in vc_line.iterrows()}  # $/MWh
 
-        
-    d['res_target'] = {}
-    d['res_target'][1] = 0.12
-    d['res_target'][2] = 0.24
-    d['res_target'][3] = 0.36
-    d['res_target'][4] = 0.48
-    d['res_target'][5] = 0.60
     d['UD_penalty'] = 9
 
     # Bounds
