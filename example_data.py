@@ -35,7 +35,7 @@ def read_data(datafolder, advanced=None):
     scenario_indicator_line_n1 = pd.read_csv(os.path.join(curPath, 'scenario_indicator_line_n1.csv'), header=0)
     scenario_indicator_line_n2 = pd.read_csv(os.path.join(curPath, 'scenario_indicator_line_n2.csv'), header=0)
     scenario_rate_n1 = pd.read_csv(os.path.join(curPath, 'scenario_rate_n1.csv'), header=0)
-    scenario_rate_n2 = pd.read_csv(os.path.join(curPath, 'scenario_rate_n1.csv'), header=0)
+    scenario_rate_n2 = pd.read_csv(os.path.join(curPath, 'scenario_rate_n2.csv'), header=0)
     state_indicator_gen = pd.read_csv(os.path.join(curPath, 'state_indicator_gen.csv'), header=0)
     state_indicator_backup_dual = pd.read_csv(os.path.join(curPath, 'state_indicator_backup_dual.csv'), header=0)
     state_indicator_backup_nodual = pd.read_csv(os.path.join(curPath, 'state_indicator_backup_nodual.csv'), header=0)
@@ -150,7 +150,7 @@ def read_data(datafolder, advanced=None):
 
                 d['prob'] = {row['st']: row['prob'] for _, row in prob.iterrows()}  
                 d['state_indicator_gen'] = {(row['i'], row['k'], row['st']): row['state_gen'] for _, row in state_indicator_gen.iterrows()}  
-                d['state_indicator_line'] = {(row['l', row['st']]): row['state_line'] for _, row in state_indicator_line.iterrows()}  
+                d['state_indicator_line'] = {(row['l'], row['st']): row['state_line'] for _, row in state_indicator_line.iterrows()}  
                 d['state_indicator_backup'] = {(row['i'], row['k'], row['st']): row['state_backup'] for _, row in state_indicator_backup_nodual.iterrows()}  
             
             else:
@@ -159,7 +159,7 @@ def read_data(datafolder, advanced=None):
 
                 d['prob'] = {row['st']: row['prob'] for _, row in prob.iterrows()}  
                 d['state_indicator_gen'] = {(row['i'], row['k'], row['st']): row['state_gen'] for _, row in state_indicator_gen.iterrows()}  
-                d['state_indicator_line'] = {(row['l', row['st']]): row['state_line'] for _, row in state_indicator_line.iterrows()}  
+                d['state_indicator_line'] = {(row['l'], row['st']): row['state_line'] for _, row in state_indicator_line.iterrows()}  
                 d['state_indicator_backup'] = {(row['i'], row['k'], row['st']): row['state_backup'] for _, row in state_indicator_backup_dual.iterrows()}  
 
 
