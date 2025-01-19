@@ -472,10 +472,10 @@ def prob_reliability_model(data, renewable):
     return m
 
 if __name__ == "__main__":
-    formulation = 'dual-no'    # None (--> None includes no and reserve), n-1, n-2, dual-no, dual-yes
+    formulation = 'dual-yes'    # None (--> None includes no and reserve), n-1, n-2, dual-no, dual-yes
     renewable_status = False
     data = read_data(datafolder="San Diego", advanced=formulation)
     m = prob_reliability_model(data, renewable=renewable_status)
 
-    m = solve_model(m, advanced=formulation, renewable=renewable_status, time_limit=1000, abs_gap=0.01, threads=8)
+    m = solve_model(m, advanced=formulation, renewable=renewable_status, time_limit=1000, abs_gap=0.01)
 

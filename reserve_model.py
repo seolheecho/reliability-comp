@@ -294,7 +294,7 @@ def reserve_reliability_model(data, renewable):
     return m
 
 if __name__ == "__main__":
-    formulation = None    # None (--> None includes no and reserve), n-1, n-2, dual-no, dual-yes
+    formulation = 'reserve'    # None (--> None includes no and reserve), n-1, n-2, dual-no, dual-yes
     renewable_status = False
     data = read_data(datafolder="San Diego", advanced=formulation)
     m = reserve_reliability_model(data, renewable=renewable_status)

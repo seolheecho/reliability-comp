@@ -274,6 +274,7 @@ def no_reliability_model(data, renewable):
                                 sum(m.weight_time[n] * m.operation_time[b] * m.unit_VC_line[l,t] * (m.flow_pos[l,t,n,b] - m.flow_neg[l,t,n,b]) 
                                     for l in m.line for t in m.year for n in m.rpdn for b in m.sub)/1000000
 
+
     transformation_string = 'gdp.bigm'
     pyo.TransformationFactory(transformation_string).apply_to(m)
        
@@ -281,9 +282,11 @@ def no_reliability_model(data, renewable):
 
 
 if __name__ == "__main__":
-    formulation = None    # None (--> None includes no and reserve), n-1, n-2, dual-no, dual-yes
+    formulation = 'no'    # no, reserve, n-1, n-2, dual-no, dual-yes
     renewable_status = False
+    solution_time_limit = 1000
+    optimal_gap = 0.01
     data = read_data(datafolder="Illustrative", advanced=formulation)
     m = no_reliability_model(data, renewable=renewable_status)
 
-    m = solve_model(m, advanced=formulation, renewable=renewable_status, time_limit=1000, abs_gap=0.00, threads=8)
+    m = solve_model(m, advanced=formulation, renewable=renewable_status, time_limit=solution_time_limit, abs_gap=optimal_gap)
