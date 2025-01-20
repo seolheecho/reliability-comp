@@ -2,7 +2,7 @@ __author__ = "Seolhee Cho"
 
 import pyomo.environ as pyo
 from example_data import read_data
-from utility import solve_model
+from utilities import solve_model
 
 
 def reserve_reliability_model(data, renewable):

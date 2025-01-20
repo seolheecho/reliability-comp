@@ -5,17 +5,26 @@ import csv
 
 
 def solve_model(m, advanced, renewable, time_limit, abs_gap):
+    import time
+
     opt = pyo.SolverFactory('gurobi')
     
     # Set up Gurobi's log file
-    log_file = "gurobi_log.txt"
-    opt.options['logfile'] = log_file
+    # log_file = "gurobi_log.txt"
+    # opt.options['logfile'] = log_file
 
     opt.options['TimeLimit'] = time_limit
     opt.options['MIPGap'] = abs_gap
     opt.options['Threads'] = 8
 
+    # Solve the model and track time
+    start_time = time.time()
     m.results = opt.solve(m, tee=True)
+    solve_time = time.time() - start_time
+
+    print(f"\nSolve time: {solve_time:.2f} seconds")        
+
+
 
     # Print results to quickly check them
     if advanced in ['no','reserve']:
@@ -33,14 +42,14 @@ def solve_model(m, advanced, renewable, time_limit, abs_gap):
                                              for i in m.node for k in m.renewable_gen for n in m.rpdn for b in m.sub), 2)
                 )    
         
-        print("CAPEX", round(value(m.capital_expenditure()), 2), 
-              "| IC_Gen", round(value(m.IC_generator()), 2), 
-              "| IC_Line", round(value(m.IC_line()), 2), 
-              "| OPEX", round(value(m.operating_expenses()), 2), 
-              "| FC_Gen", round(value(m.FOC_generator()), 2), 
-              "| FC_Line", round(value(m.FOC_line()), 2),
-              "| VC_Gen", round(value(m.VOC_generator()), 2), 
-              "| VC_Line", round(value(m.VOC_line()), 2)
+        print("CAPEX", round(pyo.value(m.capital_expenditure()), 2), 
+              "| IC_Gen", round(pyo.value(m.IC_generator()), 2), 
+              "| IC_Line", round(pyo.value(m.IC_line()), 2), 
+              "| OPEX", round(pyo.value(m.operating_expenses()), 2), 
+              "| FC_Gen", round(pyo.value(m.FOC_generator()), 2), 
+              "| FC_Line", round(pyo.value(m.FOC_line()), 2),
+              "| VC_Gen", round(pyo.value(m.VOC_generator()), 2), 
+              "| VC_Line", round(pyo.value(m.VOC_line()), 2)
         )    
 
 
@@ -59,14 +68,14 @@ def solve_model(m, advanced, renewable, time_limit, abs_gap):
                                              for i in m.node for k in m.renewable_gen for n in m.rpdn for b in m.sub for sc in m.scenario), 2)
                 )
             
-        print("CAPEX", round(value(m.capital_expenditure()), 2), 
-              "| IC_Gen", round(value(m.IC_generator()), 2), 
-              "| IC_Line", round(value(m.IC_line()), 2), 
-              "| OPEX", round(value(m.operating_expenses()), 2), 
-              "| FC_Gen", round(value(m.FOC_generator()), 2), 
-              "| FC_Line", round(value(m.FOC_line()), 2), 
-              "| VC_Gen", round(value(m.VOC_generator()), 2), 
-              "| VC_Line", round(value(m.VOC_line()), 2)
+        print("CAPEX", round(pyo.value(m.capital_expenditure()), 2), 
+              "| IC_Gen", round(pyo.value(m.IC_generator()), 2), 
+              "| IC_Line", round(pyo.value(m.IC_line()), 2), 
+              "| OPEX", round(pyo.value(m.operating_expenses()), 2), 
+              "| FC_Gen", round(pyo.value(m.FOC_generator()), 2), 
+              "| FC_Line", round(pyo.value(m.FOC_line()), 2), 
+              "| VC_Gen", round(pyo.value(m.VOC_generator()), 2), 
+              "| VC_Line", round(pyo.value(m.VOC_line()), 2)
             )        
 
 
@@ -89,34 +98,34 @@ def solve_model(m, advanced, renewable, time_limit, abs_gap):
                                              for i in m.node for k in m.renewable_gen for n in m.rpdn for b in m.sub for st in m.state), 2)
                 )
             
-        print("CAPEX", round(value(m.capital_expenditure()), 2), 
-              "| IC_Gen", round(value(m.IC_generator()), 2), 
-              "| IC_Line", round(value(m.IC_line()), 2), 
-              "| IC_backup", round(value(m.IC_backup()), 2),
-              "| OPEX", round(value(m.operating_expenses()), 2), 
-              "| FC_Gen", round(value(m.FOC_generator()), 2), 
-              "| FC_Line", round(value(m.FOC_line()), 2), 
-              "| FC_backup", round(value(m.FOC_backup()), 2),
-              "| VC_Gen", round(value(m.VOC_generator()), 2), 
-              "| VC_Line", round(value(m.VOC_line()), 2), 
-              "| VC_Backup", round(value(m.VOC_backup()), 2), 
-              "| EENS penalty", round(value(m.EENS_penalties()), 2)
+        print("CAPEX", round(pyo.value(m.capital_expenditure()), 2), 
+              "| IC_Gen", round(pyo.value(m.IC_generator()), 2), 
+              "| IC_Line", round(pyo.value(m.IC_line()), 2), 
+              "| IC_backup", round(pyo.value(m.IC_backup()), 2),
+              "| OPEX", round(pyo.value(m.operating_expenses()), 2), 
+              "| FC_Gen", round(pyo.value(m.FOC_generator()), 2), 
+              "| FC_Line", round(pyo.value(m.FOC_line()), 2), 
+              "| FC_backup", round(pyo.value(m.FOC_backup()), 2),
+              "| VC_Gen", round(pyo.value(m.VOC_generator()), 2), 
+              "| VC_Line", round(pyo.value(m.VOC_line()), 2), 
+              "| VC_Backup", round(pyo.value(m.VOC_backup()), 2), 
+              "| EENS penalty", round(pyo.value(m.EENS_penalties()), 2)
             )
 
     # Read the log file and write it to a .csv file
-    csv_file = f"gurobi_log_{advanced}.csv"
-    with open(log_file, "r") as infile, open(csv_file, "w", newline="") as outfile:
-        writer = csv.writer(outfile)
-        for line in infile:
-            writer.writerow([line.strip()])
+    # csv_file = f"gurobi_log_{advanced}.csv"
+    # with open(log_file, "r") as infile, open(csv_file, "w", newline="") as outfile:
+    #     writer = csv.writer(outfile)
+    #     for line in infile:
+    #         writer.writerow([line.strip()])
 
     return m
 
 
 
-def export_results(variables_dict, advanced):
+def export_results(datafolder, variables_dict, advanced, renewable):
 
-    filename = f"results_{advanced}.xlsx"
+    filename = f"{datafolder}_results_{advanced}_res_{renewable}.xlsx"
 
     # Create a Pandas Excel writer object to handle multiple sheets
     with pd.ExcelWriter(filename, engine="xlsxwriter") as writer:
@@ -135,7 +144,6 @@ def export_results(variables_dict, advanced):
             
             # Write the DataFrame to a new sheet in the Excel file
             df.to_excel(writer, sheet_name=var_name, index=False)
-
 
 
 
@@ -170,18 +178,17 @@ def solve_prob_model(m, renewable, time_limit, abs_gap):
                                             for i in m.node for k in m.renewable_gen for n in m.rpdn for b in m.sub for st in m.state), 2)
             )
         
-    print("CAPEX", round(value(m.capital_expenditure()), 2), 
-            "| IC_Gen", round(value(m.IC_generator()), 2), 
-            "| IC_Line", round(value(m.IC_line()), 2), 
-            "| IC_backup", round(value(m.IC_backup()), 2),
-            "| OPEX", round(value(m.operating_expenses()), 2), 
-            "| FC_Gen", round(value(m.FOC_generator()), 2), 
-            "| FC_Line", round(value(m.FOC_line()), 2), 
-            "| FC_backup", round(value(m.FOC_backup()), 2),
-            "| VC_Gen", round(value(m.VOC_generator()), 2), 
-            "| VC_Line", round(value(m.VOC_line()), 2), 
-            "| VC_Backup", round(value(m.VOC_backup()), 2), 
-            "| EENS penalty", round(value(m.EENS_penalties()), 2)
+    print("CAPEX", round(pyo.value(m.capital_expenditure()), 2), 
+            "| IC_Gen", round(pyo.value(m.IC_generator()), 2), 
+            "| IC_Line", round(pyo.value(m.IC_line()), 2), 
+            "| IC_backup", round(pyo.value(m.IC_backup()), 2),
+            "| FC_Gen", round(pyo.value(m.FOC_generator()), 2), 
+            "| FC_Line", round(pyo.value(m.FOC_line()), 2), 
+            "| FC_backup", round(pyo.value(m.FOC_backup()), 2),
+            "| VC_Gen", round(pyo.value(m.VOC_generator()), 2), 
+            "| VC_Line", round(pyo.value(m.VOC_line()), 2), 
+            "| VC_Backup", round(pyo.value(m.VOC_backup()), 2), 
+            "| EENS penalty", round(pyo.value(m.EENS_penalties()), 2)
         )
 
     return m
