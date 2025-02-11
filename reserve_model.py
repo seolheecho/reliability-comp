@@ -165,80 +165,80 @@ def reserve_reliability_model(data, renewable):
     m.flow_neg = pyo.Var(m.line, m.year, m.rpdn, m.sub, within=pyo.NonPositiveReals, doc='Negative power flow') 
     m.over_gen = pyo.Var(m.node, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Over-generation')
 
-    if renewable == False:
-        m.cap_opt = pyo.Var(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Operation capacity')
-        m.cap_rev = pyo.Var(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Reserve capacity')
+    # if renewable == False:
+    m.cap_opt = pyo.Var(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Operation capacity')
+    m.cap_rev = pyo.Var(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub, within=pyo.NonNegativeReals, doc='Reserve capacity')
 
 
-        @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
-        def operation_reserve_capacity(m, i, k, t, n, b):
-            return m.cap_ava[i,k,t] == m.cap_opt[i,k,t,n,b] + m.cap_rev[i,k,t,n,b]
+    @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
+    def operation_reserve_capacity(m, i, k, t, n, b):
+        return m.cap_ava[i,k,t] == m.cap_opt[i,k,t,n,b] + m.cap_rev[i,k,t,n,b]
+    
+    @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
+    def power_generation_lb(m, i, k, t, n, b):
+        return m.min_opt_dpt[k] * m.cap_opt[i,k,t,n,b] <= m.ppd[i,k,t,n,b]
+    
+    @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
+    def power_generation_ub(m, i, k, t, n, b):
+        return m.ppd[i,k,t,n,b] <= m.max_opt_dpt[k] * m.cap_opt[i,k,t,n,b]  
+
+    @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
+    def ramp_up_constraint_rv(m, i, k, t, n, b):
+        if b == 1:
+            return m.ppd[i,k,t,n,b] <= m.ramp_up[k] * m.cap_opt[i,k,t,n,b]  
+        else:
+            return m.ppd[i,k,t,n,b] - m.ppd[i,k,t,n,b-1] <= m.ramp_up[k] * m.cap_opt[i,k,t,n,b]    
+
+    @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
+    def ramp_down_constraint_rv(m, i, k, t, n, b):
+        if b == 1:
+            return -m.ppd[i,k,t,n,b] <= m.ramp_down[k] * m.cap_opt[i,k,t,n,b]  
+        else:
+            return m.ppd[i,k,t,n,b-1] - m.ppd[i,k,t,n,b] <= m.ramp_down[k] * m.cap_opt[i,k,t,n,b]  
+
+    @m.Constraint(m.node, m.renewable_gen, m.year, m.rpdn, m.sub)
+    def res_power_generation(m, i, k, t, n, b):
+        return m.ppd[i,k,t,n,b] == m.capacity_factor[i,t,n,b] * m.cap_ava[i,k,t]  
+    
+    @m.Constraint(m.node, m.year, m.rpdn, m.sub)
+    def reserve_capacity(m, i, t, n, b):
+        return sum(m.cap_rev[i,k,t,n,b] for k in m.dispatch_gen) >= m.reserve_ratio * m.load_demand[i,t,n,b]
+
+    # if renewable == True:
+    #     @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
+    #     def power_generation_lb(m, i, k, t, n, b):
+    #         return m.min_opt_dpt[k] * m.cap_ava[i,k,t] <= m.ppd[i,k,t,n,b]
         
-        @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
-        def power_generation_lb(m, i, k, t, n, b):
-            return m.min_opt_dpt[k] * m.cap_opt[i,k,t,n,b] <= m.ppd[i,k,t,n,b]
-        
-        @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
-        def power_generation_ub(m, i, k, t, n, b):
-            return m.ppd[i,k,t,n,b] <= m.max_opt_dpt[k] * m.cap_opt[i,k,t,n,b]  
+    #     @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
+    #     def power_generation_ub(m, i, k, t, n, b):
+    #         return m.ppd[i,k,t,n,b] <= m.max_opt_dpt[k] * m.cap_ava[i,k,t]  
 
-        @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
-        def ramp_up_constraint_rv(m, i, k, t, n, b):
-            if b == 1:
-                return m.ppd[i,k,t,n,b] <= m.ramp_up[k] * m.cap_opt[i,k,t,n,b]  
-            else:
-                return m.ppd[i,k,t,n,b] - m.ppd[i,k,t,n,b-1] <= m.ramp_up[k] * m.cap_opt[i,k,t,n,b]    
+    #     @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
+    #     def ramp_up_constraint_rv(m, i, k, t, n, b):
+    #         if b == 1:
+    #             return m.ppd[i,k,t,n,b] <= m.ramp_up[k] * m.cap_ava[i,k,t]  
+    #         else:
+    #             return m.ppd[i,k,t,n,b] - m.ppd[i,k,t,n,b-1] <= m.ramp_up[k] * m.cap_ava[i,k,t]    
 
-        @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
-        def ramp_down_constraint_rv(m, i, k, t, n, b):
-            if b == 1:
-                return -m.ppd[i,k,t,n,b] <= m.ramp_down[k] * m.cap_opt[i,k,t,n,b]  
-            else:
-                return m.ppd[i,k,t,n,b-1] - m.ppd[i,k,t,n,b] <= m.ramp_down[k] * m.cap_opt[i,k,t,n,b]  
-
-        @m.Constraint(m.node, m.renewable_gen, m.year, m.rpdn, m.sub)
-        def res_power_generation(m, i, k, t, n, b):
-            return m.ppd[i,k,t,n,b] == m.capacity_factor[i,t,n,b] * m.cap_ava[i,k,t]  
-        
-        @m.Constraint(m.node, m.year, m.rpdn, m.sub)
-        def reserve_capacity(m, i, t, n, b):
-            return sum(m.cap_rev[i,k,t,n,b] for k in m.dispatch_gen) >= m.reserve_ratio * m.load_demand[i,t,n,b]
-
-    if renewable == True:
-        @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
-        def power_generation_lb(m, i, k, t, n, b):
-            return m.min_opt_dpt[k] * m.cap_ava[i,k,t] <= m.ppd[i,k,t,n,b]
-        
-        @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
-        def power_generation_ub(m, i, k, t, n, b):
-            return m.ppd[i,k,t,n,b] <= m.max_opt_dpt[k] * m.cap_ava[i,k,t]  
-
-        @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
-        def ramp_up_constraint_rv(m, i, k, t, n, b):
-            if b == 1:
-                return m.ppd[i,k,t,n,b] <= m.ramp_up[k] * m.cap_ava[i,k,t]  
-            else:
-                return m.ppd[i,k,t,n,b] - m.ppd[i,k,t,n,b-1] <= m.ramp_up[k] * m.cap_ava[i,k,t]    
-
-        @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
-        def ramp_down_constraint_rv(m, i, k, t, n, b):
-            if b == 1:
-                return -m.ppd[i,k,t,n,b] <= m.ramp_down[k] * m.cap_ava[i,k,t]
-            else:
-                return m.ppd[i,k,t,n,b-1] - m.ppd[i,k,t,n,b] <= m.ramp_down[k] * m.cap_ava[i,k,t]  
+    #     @m.Constraint(m.node, m.dispatch_gen, m.year, m.rpdn, m.sub)
+    #     def ramp_down_constraint_rv(m, i, k, t, n, b):
+    #         if b == 1:
+    #             return -m.ppd[i,k,t,n,b] <= m.ramp_down[k] * m.cap_ava[i,k,t]
+    #         else:
+    #             return m.ppd[i,k,t,n,b-1] - m.ppd[i,k,t,n,b] <= m.ramp_down[k] * m.cap_ava[i,k,t]  
             
-        @m.Constraint(m.node, m.renewable_gen, m.year, m.rpdn, m.sub)
-        def res_power_generation(m, i, k, t, n, b):
-            return m.ppd[i,k,t,n,b] == m.capacity_factor[i,t,n,b] * m.cap_ava[i,k,t]  
+    #     @m.Constraint(m.node, m.renewable_gen, m.year, m.rpdn, m.sub)
+    #     def res_power_generation(m, i, k, t, n, b):
+    #         return m.ppd[i,k,t,n,b] == m.capacity_factor[i,t,n,b] * m.cap_ava[i,k,t]  
 
-        @m.Constraint()
-        def reserve_capacity(m):
-            return (
-                sum(m.over_gen[i,t,n,b] 
-                    for i in m.node for t in m.year for n in m.rpdn for b in m.sub) 
-                    >= m.reserve_ratio * 
-                    sum(m.load_demand[i,t,n,b] for i in m.node for t in m.year for n in m.rpdn for b in m.sub)
-            )
+    #     @m.Constraint()
+    #     def reserve_capacity(m):
+    #         return (
+    #             sum(m.over_gen[i,t,n,b] 
+    #                 for i in m.node for t in m.year for n in m.rpdn for b in m.sub) 
+    #                 >= m.reserve_ratio * 
+    #                 sum(m.load_demand[i,t,n,b] for i in m.node for t in m.year for n in m.rpdn for b in m.sub)
+    #         )
         
 
     @m.Constraint(m.line, m.year, m.rpdn, m.sub)
