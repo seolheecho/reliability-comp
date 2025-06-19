@@ -157,7 +157,7 @@ def solution_algorithm(datafolder, advanced, renewable, time_limit, abs_gap):
 
 # Example usage
 datafolder = 'Illustrative'    # case_studies -> 'Illustrative','San Diego'
-advanced = 'no'        # reliability formulation -> 'no', 'reserve', 'n-1', 'n-2', 'dual-no', 'dual-yes'
+advanced = 'n-2'        # reliability formulation -> 'no', 'reserve', 'n-1', 'n-2', 'dual-no', 'dual-yes'
 renewable = False           # renewable constraint -> True, False
 time_limit = 1000
 abs_gap = 0.01
