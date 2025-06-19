@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 def read_data(datafolder, advanced):
-    curPath = os.path.join(os.path.abspath(os.path.curdir), 'reliability-comp','data2', datafolder)
+    curPath = os.path.join(os.path.abspath(os.path.curdir), 'data2', datafolder)
 
     # Read CSV files after defining file paths
     capacity_factor = pd.read_csv(os.path.join(curPath, 'capacity_factor.csv'), header=0)
@@ -238,7 +238,7 @@ def read_data(datafolder, advanced):
 
 
 def read_prod_data(datafolder):
-    curPath = os.path.join(os.path.abspath(os.path.curdir), 'reliability-comp','data2', datafolder)
+    curPath = os.path.join(os.path.abspath(os.path.curdir), 'data2', datafolder)
 
     # Read CSV files after defining file paths
     capacity_factor = pd.read_csv(os.path.join(curPath, 'capacity_factor.csv'), header=0)

@@ -147,6 +147,29 @@ def export_results(datafolder, variables_dict, advanced, renewable):
 
 
 
+def export_results_congestion(datafolder, variables_dict, advanced, renewable):
+
+    filename = f"{datafolder}_congestion_results_{advanced}_res_{renewable}.xlsx"
+
+    # Create a Pandas Excel writer object to handle multiple sheets
+    with pd.ExcelWriter(filename, engine="xlsxwriter") as writer:
+        for var_name, variable in variables_dict.items():
+            # Extract data from the Pyomo variable
+            rows = []
+            for index, var in variable.items():
+                if var.value is not None:  # Check if the variable has an optimal value
+                    rows.append(list(index) + [var.value])
+            
+            # Determine column names dynamically based on the index structure
+            column_names = [f"{i+1}" for i in range(len(index))] + ["Value"]
+            
+            # Create a DataFrame for the variable
+            df = pd.DataFrame(rows, columns=column_names)
+            
+            # Write the DataFrame to a new sheet in the Excel file
+            df.to_excel(writer, sheet_name=var_name, index=False)
+
+
 def solve_prob_model(m, renewable, time_limit, abs_gap):
     opt = pyo.SolverFactory('gurobi')
     

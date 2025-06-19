@@ -1,5 +1,5 @@
 from example_data import read_data, read_prod_data
-from utilities import solve_model, solve_prob_model, export_results
+from utilities import solve_model, solve_prob_model, export_results, export_results_congestion
 from no_model import no_reliability_model
 from reserve_model import reserve_reliability_model
 from n_k_model import n_k_reliability_model
@@ -131,11 +131,20 @@ def solution_algorithm(datafolder, advanced, renewable, time_limit, abs_gap):
         print("Solving lower-level model...")
         lower_model = solve_prob_model(lower_model, renewable, time_limit, abs_gap)
 
+        # Export results to excel for further analysis
+        variables_dict_lower = {"prod_gen": lower_model.ppd,
+                          "flow_line": lower_model.flow,
+                          "over_gen": lower_model.over_gen,
+                          "load_shedding": lower_model.ls
+        }
+
+        export_results_congestion(datafolder, variables_dict_lower, advanced, renewable)
 
         return {
             "upper-level results": upper_model.results,
             "lower-level results": lower_model.results
         }
+
 
 
     else: 
@@ -147,9 +156,9 @@ def solution_algorithm(datafolder, advanced, renewable, time_limit, abs_gap):
 
 
 # Example usage
-datafolder = 'San Diego'    # case_studies -> 'Illustrative','San Diego'
-advanced = 'dual-yes'        # reliability formulation -> 'no', 'reserve', 'n-1', 'n-2', 'dual-no', 'dual-yes'
-renewable = True           # renewable constraint -> True, False
+datafolder = 'Illustrative'    # case_studies -> 'Illustrative','San Diego'
+advanced = 'no'        # reliability formulation -> 'no', 'reserve', 'n-1', 'n-2', 'dual-no', 'dual-yes'
+renewable = False           # renewable constraint -> True, False
 time_limit = 1000
 abs_gap = 0.01
 
