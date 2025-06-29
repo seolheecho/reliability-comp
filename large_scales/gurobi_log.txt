@@ -1,0 +1,87 @@
+
+Gurobi 12.0.0 (mac64[arm]) logging started Sun Jun 29 00:13:54 2025
+
+Set parameter LogFile to value "gurobi_log.txt"
+Set parameter TimeLimit to value 1000
+Set parameter MIPGap to value 0.01
+Set parameter Threads to value 8
+Gurobi Optimizer version 12.0.0 build v12.0.0rc1 (mac64[arm] - Darwin 24.5.0 24F74)
+
+CPU model: Apple M4 Pro
+Thread count: 14 physical cores, 14 logical processors, using up to 8 threads
+
+Non-default parameters:
+TimeLimit  1000
+MIPGap  0.01
+Threads  8
+
+Optimize a model with 628760 rows, 316513 columns and 1435616 nonzeros
+Model fingerprint: 0x625fa245
+Variable types: 263953 continuous, 52560 integer (52560 binary)
+Coefficient statistics:
+  Matrix range     [1e-05, 2e+03]
+  Objective range  [9e-06, 1e+01]
+  Bounds range     [1e+00, 1e+03]
+  RHS range        [1e+00, 2e+03]
+Presolve removed 579256 rows and 284033 columns
+Presolve time: 0.07s
+Presolved: 49504 rows, 32480 columns, 116128 nonzeros
+Variable types: 21280 continuous, 11200 integer (5600 binary)
+Found heuristic solution: objective 182032.46853
+Performing another presolve...
+Presolve removed 49475 rows and 32458 columns
+Presolve time: 0.11s
+
+Root relaxation: interrupted, 0 iterations, 0.00 seconds (0.00 work units)
+
+Explored 1 nodes (0 simplex iterations) in 0.34 seconds (0.80 work units)
+Thread count was 8 (of 14 available processors)
+
+Solution count 1: 182032 
+
+Optimal solution found (tolerance 1.00e-02)
+Best objective 1.820324685323e+05, best bound 1.820324685323e+05, gap 0.0000%
+
+Gurobi 12.0.0 (mac64[arm]) logging started Sun Jun 29 01:34:48 2025
+
+Set parameter LogFile to value "gurobi_log.txt"
+Set parameter TimeLimit to value 1000
+Set parameter MIPGap to value 0.01
+Set parameter Threads to value 8
+Gurobi Optimizer version 12.0.0 build v12.0.0rc1 (mac64[arm] - Darwin 24.5.0 24F74)
+
+CPU model: Apple M4 Pro
+Thread count: 14 physical cores, 14 logical processors, using up to 8 threads
+
+Non-default parameters:
+TimeLimit  1000
+MIPGap  0.01
+Threads  8
+
+Optimize a model with 628760 rows, 316513 columns and 1435616 nonzeros
+Model fingerprint: 0xdb594876
+Variable types: 263953 continuous, 52560 integer (52560 binary)
+Coefficient statistics:
+  Matrix range     [1e-05, 2e+03]
+  Objective range  [9e-06, 1e+01]
+  Bounds range     [1e+00, 1e+03]
+  RHS range        [1e+00, 2e+03]
+Presolve removed 571761 rows and 278603 columns
+Presolve time: 0.07s
+Presolved: 56999 rows, 37910 columns, 134756 nonzeros
+Variable types: 24736 continuous, 13174 integer (6587 binary)
+Found heuristic solution: objective 156013.49209
+Performing another presolve...
+Presolve removed 56868 rows and 37802 columns
+Presolve time: 0.28s
+Found heuristic solution: objective 156012.83247
+
+Root relaxation: interrupted, 0 iterations, 0.00 seconds (0.00 work units)
+
+Explored 1 nodes (0 simplex iterations) in 0.51 seconds (1.03 work units)
+Thread count was 8 (of 14 available processors)
+
+Solution count 2: 156013 156013 
+
+Optimal solution found (tolerance 1.00e-02)
+Best objective 1.560128324740e+05, best bound 1.560128324740e+05, gap 0.0000%
